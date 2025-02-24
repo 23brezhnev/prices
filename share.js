@@ -7,6 +7,21 @@ function loadPriceList() {
     const urlParams = new URLSearchParams(window.location.search);
     const priceListId = urlParams.get('id');
     
+<<<<<<< HEAD
+    // Получаем данные из localStorage (в реальном приложении здесь был бы запрос к серверу)
+    const savedPriceLists = JSON.parse(localStorage.getItem('priceLists')) || [];
+    const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
+    
+    priceList = savedPriceLists.find(pl => pl.id === parseInt(priceListId));
+    products = savedProducts;
+    
+    if (!priceList) {
+        document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
+        return;
+    }
+    
+    renderPriceList();
+=======
     // Загружаем прайс-лист
     database.ref(`priceLists/${priceListId}`).once('value', (snapshot) => {
         priceList = snapshot.val();
@@ -21,6 +36,7 @@ function loadPriceList() {
             renderPriceList();
         });
     });
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 function renderPriceList() {
@@ -159,6 +175,19 @@ function sendOrder(e) {
         customerEmail: document.getElementById('customerEmail').value,
         customerComment: document.getElementById('customerComment').value,
         items: cart,
+<<<<<<< HEAD
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+    };
+    
+    // В реальном приложении здесь был бы запрос к серверу
+    console.log('Отправка заказа:', orderData);
+    alert('Заказ успешно отправлен!');
+    
+    // Очищаем корзину и закрываем форму
+    cart = [];
+    updateCartCount();
+    toggleOrderForm();
+=======
         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         createdAt: firebase.database.ServerValue.TIMESTAMP
     };
@@ -175,6 +204,7 @@ function sendOrder(e) {
             console.error('Ошибка при отправке заказа:', error);
             alert('Произошла ошибка при отправке заказа');
         });
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 // Запускаем загрузку при старте

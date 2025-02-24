@@ -11,6 +11,24 @@ let mainImageIndex = 0;
 // Добавим переменную для временного хранения товаров нового прайс-листа
 let tempPriceListItems = [];
 
+<<<<<<< HEAD
+// Загрузка данных из localStorage
+function loadData() {
+    const savedProducts = localStorage.getItem('products');
+    const savedPriceLists = localStorage.getItem('priceLists');
+    
+    if (savedProducts) products = JSON.parse(savedProducts);
+    if (savedPriceLists) priceLists = JSON.parse(savedPriceLists);
+    
+    renderProducts();
+    renderPriceLists();
+}
+
+// Сохранение данных в localStorage
+function saveData() {
+    localStorage.setItem('products', JSON.stringify(products));
+    localStorage.setItem('priceLists', JSON.stringify(priceLists));
+=======
 // В начале файла добавим проверку подключения
 async function checkConnection() {
     try {
@@ -59,6 +77,7 @@ async function loadData() {
 function saveData() {
     supabase.from('products').set(products);
     supabase.from('price_lists').set(priceLists);
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 // Обновим функцию обработки загрузки изображений
@@ -173,14 +192,40 @@ window.addEventListener('click', (e) => {
     }
 });
 
+<<<<<<< HEAD
+// Обновим обработчик формы
+document.getElementById('productForm').addEventListener('submit', (e) => {
+=======
 // Обновим обработчик формы товара
 document.getElementById('productForm').addEventListener('submit', async (e) => {
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
     e.preventDefault();
     
     const productData = {
         name: document.getElementById('productName').value,
         basePrice: parseFloat(document.getElementById('basePrice').value),
         description: document.getElementById('productDescription').value.trim(),
+<<<<<<< HEAD
+        images: currentImages,
+        mainImageIndex: mainImageIndex
+    };
+    
+    if (editingProductId) {
+        const product = products.find(p => p.id === editingProductId);
+        Object.assign(product, productData);
+    } else {
+        products.push({
+            id: Date.now(),
+            ...productData
+        });
+    }
+    
+    saveData();
+    renderProducts();
+    renderPriceLists();
+    
+    document.getElementById('productModal').style.display = 'none';
+=======
         images: currentImages || [], // Добавим значение по умолчанию
         mainImageIndex: mainImageIndex || 0 // Добавим значение по умолчанию
     };
@@ -216,6 +261,7 @@ document.getElementById('productForm').addEventListener('submit', async (e) => {
         console.error('Ошибка сохранения товара:', error);
         alert('Ошибка при сохранении товара: ' + error.message);
     }
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 });
 
 // Обновим функцию открытия модального окна прайс-листа
@@ -356,18 +402,56 @@ function toggleAllProducts() {
 }
 
 // Обновим обработчик формы создания/редактирования прайс-листа
+<<<<<<< HEAD
+document.getElementById('priceListForm').addEventListener('submit', (e) => {
+=======
 document.getElementById('priceListForm').addEventListener('submit', async (e) => {
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
     e.preventDefault();
     
     const name = document.getElementById('priceListName').value;
     const selectedProducts = [];
     
+<<<<<<< HEAD
+    // Собираем выбранные товары
     document.querySelectorAll('.product-checkbox:checked').forEach(checkbox => {
         const productId = parseInt(checkbox.dataset.productId);
+        const product = products.find(p => p.id === productId);
+=======
+    document.querySelectorAll('.product-checkbox:checked').forEach(checkbox => {
+        const productId = parseInt(checkbox.dataset.productId);
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
         const row = checkbox.closest('tr');
         const priceInput = row.querySelector('.new-price-input');
         const quantityInput = row.querySelector('.quantity-input');
         
+<<<<<<< HEAD
+        const newPrice = parseFloat(priceInput.value) || product.basePrice;
+        const quantity = parseInt(quantityInput.value) || 1;
+        
+        selectedProducts.push({
+            productId,
+            price: newPrice,
+            quantity: quantity
+        });
+    });
+    
+    if (editingPriceListId) {
+        const priceList = priceLists.find(pl => pl.id === editingPriceListId);
+        priceList.name = name;
+        priceList.items = selectedProducts;
+    } else {
+        priceLists.push({
+            id: Date.now(),
+            name,
+            items: selectedProducts
+        });
+    }
+    
+    saveData();
+    renderPriceLists();
+    closePriceListModal();
+=======
         selectedProducts.push({
             productId,
             price: parseFloat(priceInput.value) || product.basePrice,
@@ -405,6 +489,7 @@ document.getElementById('priceListForm').addEventListener('submit', async (e) =>
         console.error('Ошибка сохранения прайс-листа:', error);
         alert('Ошибка при сохранении прайс-листа');
     }
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 });
 
 // Добавим функцию для создания выпадающего меню
@@ -569,6 +654,23 @@ function editPriceList(priceListId) {
     openPriceListModal(priceListId);
 }
 
+<<<<<<< HEAD
+// Добавим функции для удаления товаров
+function deleteProduct(productId) {
+    if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
+    
+    // Удаляем товар из списка товаров
+    products = products.filter(p => p.id !== productId);
+    
+    // Удаляем товар из всех прайс-листов
+    priceLists.forEach(priceList => {
+        priceList.items = priceList.items.filter(item => item.productId !== productId);
+    });
+    
+    saveData();
+    renderProducts();
+    renderPriceLists();
+=======
 // Обновим функцию удаления товара
 async function deleteProduct(productId) {
     if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
@@ -604,6 +706,7 @@ async function deleteProduct(productId) {
         console.error('Ошибка удаления товара:', error);
         alert('Ошибка при удалении товара');
     }
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 // Добавим обработку навигации
@@ -703,8 +806,13 @@ function removeItemFromPriceList(productId) {
 
 // Добавим функцию генерации ссылки для шаринга
 function getShareLink(priceListId) {
+<<<<<<< HEAD
+    // Используем window.location.href для получения текущего URL
+    const baseUrl = window.location.href.split('/').slice(0, -1).join('/');
+=======
     // Используем window.location.origin вместо разделения URL
     const baseUrl = window.location.origin;
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
     return `${baseUrl}/share.html?id=${priceListId}`;
 }
 
@@ -719,6 +827,10 @@ function shareList(priceListId) {
     });
 }
 
+<<<<<<< HEAD
+// Загрузка данных при старте
+loadData(); 
+=======
 // Обновим функцию удаления прайс-листа
 async function deletePriceList(priceListId) {
     if (!confirm('Вы уверены, что хотите удалить этот прайс-лист?')) return;
@@ -738,3 +850,4 @@ async function deletePriceList(priceListId) {
         alert('Ошибка при удалении прайс-листа');
     }
 } 
+>>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
