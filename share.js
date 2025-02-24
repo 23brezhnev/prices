@@ -7,19 +7,20 @@ function loadPriceList() {
     const urlParams = new URLSearchParams(window.location.search);
     const priceListId = urlParams.get('id');
     
-    // Получаем данные из localStorage (в реальном приложении здесь был бы запрос к серверу)
-    const savedPriceLists = JSON.parse(localStorage.getItem('priceLists')) || [];
-    const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    
-    priceList = savedPriceLists.find(pl => pl.id === parseInt(priceListId));
-    products = savedProducts;
-    
-    if (!priceList) {
-        document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
-        return;
-    }
-    
-    renderPriceList();
+    // Загружаем прайс-лист
+    database.ref(`priceLists/${priceListId}`).once('value', (snapshot) => {
+        priceList = snapshot.val();
+        if (!priceList) {
+            document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
+            return;
+        }
+        
+        // Загружаем все товары
+        database.ref('products').once('value', (snapshot) => {
+            products = snapshot.val() || [];
+            renderPriceList();
+        });
+    });
 }
 
 function renderPriceList() {
@@ -158,17 +159,22 @@ function sendOrder(e) {
         customerEmail: document.getElementById('customerEmail').value,
         customerComment: document.getElementById('customerComment').value,
         items: cart,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        createdAt: firebase.database.ServerValue.TIMESTAMP
     };
     
-    // В реальном приложении здесь был бы запрос к серверу
-    console.log('Отправка заказа:', orderData);
-    alert('Заказ успешно отправлен!');
-    
-    // Очищаем корзину и закрываем форму
-    cart = [];
-    updateCartCount();
-    toggleOrderForm();
+    // Сохраняем заказ в базу
+    database.ref('orders').push(orderData)
+        .then(() => {
+            alert('Заказ успешно отправлен!');
+            cart = [];
+            updateCartCount();
+            toggleOrderForm();
+        })
+        .catch(error => {
+            console.error('Ошибка при отправке заказа:', error);
+            alert('Произошла ошибка при отправке заказа');
+        });
 }
 
 // Запускаем загрузку при старте
