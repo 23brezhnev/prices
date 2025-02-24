@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр прайс-листа</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="share-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="share-header">
+            <h1 id="priceListName"></h1>
+            <div class="cart-widget" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <span id="cartCount">0</span>
+            </div>
+        </div>
+
+        <div class="products-grid" id="productsGrid"></div>
+
+        <!-- Корзина -->
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Корзина</h2>
+                    <span class="close" onclick="toggleCart()">&times;</span>
+                </div>
+                <div id="cartItems"></div>
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        Итого: <span id="cartTotal">0</span> ₽
+                    </div>
+                    <button onclick="submitOrder()" class="submit-order-btn">Оформить заказ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Форма заказа -->
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Оформление заказа</h2>
+                    <span class="close" onclick="toggleOrderForm()">&times;</span>
+                </div>
+                <form id="orderForm" onsubmit="sendOrder(event)">
+                    <input type="text" id="customerName" placeholder="Ваше имя" required>
+                    <input type="tel" id="customerPhone" placeholder="Телефон" required>
+                    <input type="email" id="customerEmail" placeholder="Email" required>
+                    <textarea id="customerComment" placeholder="Комментарий к заказу" rows="3"></textarea>
+                    <button type="submit">Отправить заказ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="share.js"></script>
+</body>
+</html> 

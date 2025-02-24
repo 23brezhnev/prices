@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Управление прайс-листами">
+    <title>Управление прайс-листами</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Управление товарами и прайс-листами</h1>
+        
+        <!-- Навигация -->
+        <div class="navigation">
+            <button class="nav-btn active" data-section="products">Товары</button>
+            <button class="nav-btn" data-section="price-lists">Прайс-листы</button>
+        </div>
+
+        <!-- Секция товаров -->
+        <div class="page-section active" id="products-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Список товаров</h2>
+                    <button onclick="openProductModal()" class="add-button">
+                        <i class="fas fa-plus"></i> Добавить новый товар
+                    </button>
+                </div>
+                <div id="productsList"></div>
+            </div>
+        </div>
+
+        <!-- Модальное окно для товара -->
+        <div id="productModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Добавить товар</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="productForm">
+                    <div class="image-gallery" id="imageGallery">
+                        <div class="image-upload-container">
+                            <input type="file" 
+                                   id="imageInput" 
+                                   accept="image/*"
+                                   multiple
+                                   onchange="handleImageUpload(event)">
+                            <label for="imageInput" class="upload-button">Добавить фото</label>
+                        </div>
+                    </div>
+                    <input type="text" id="productName" placeholder="Название товара" required>
+                    <input type="number" id="basePrice" placeholder="Базовая цена" required>
+                    <textarea id="productDescription" 
+                              placeholder="Описание товара" 
+                              maxlength="250"
+                              rows="3"></textarea>
+                    <button type="submit">Сохранить</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Секция прайс-листов -->
+        <div class="page-section" id="price-lists-section">
+            <div class="section">
+                <div class="section-header">
+                    <h2>Список прайс-листов</h2>
+                    <button onclick="openPriceListModal()" class="add-button">
+                        <i class="fas fa-plus"></i> Создать прайс-лист
+                    </button>
+                </div>
+                <div id="priceListsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Модальное окно для прайс-листа -->
+        <div id="priceListModal" class="modal">
+            <div class="modal-content modal-content-large">
+                <div class="modal-header">
+                    <h2 id="priceListModalTitle">Создать прайс-лист</h2>
+                    <span class="close" onclick="closePriceListModal()">&times;</span>
+                </div>
+                <form id="priceListForm">
+                    <input type="text" id="priceListName" placeholder="Название прайс-листа" required>
+                    <div class="products-selection">
+                        <table class="products-selection-table">
+                            <thead>
+                                <tr>
+                                    <th class="checkbox-column">
+                                        <input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
+                                    </th>
+                                    <th>Товар</th>
+                                    <th>Текущая цена</th>
+                                    <th>Новая цена</th>
+                                    <th>Количество</th>
+                                    <th>Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsSelectionBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit">Сохранить прайс-лист</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Создаем глобальную переменную createClient
+        const { createClient } = supabase;
+    </script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> 
