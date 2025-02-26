@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Auth Debug</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.21.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <h1>Supabase Auth Debug</h1>
+  <div id="output"></div>
+
+  <script>
+    const output = document.getElementById('output');
+    
+    function log(message) {
+      const div = document.createElement('div');
+      div.textContent = message;
+      output.appendChild(div);
+    }
+    
+    async function testConnection() {
+      try {
+        log('Testing Supabase connection...');
+        
+        const supabaseUrl = 'https://eeamyvvtzxbtdngdnofc.supabase.co';
+        const supabaseKey = 'YOUR_ACTUALeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlYW15dnZ0enhidGRuZ2Rub2ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA0MjAyMTUsImV4cCI6MjA1NTk5NjIxNX0.tjAJ0ZvyqOcJKI2P1bhXts4higZzemZskAx2OZ-P6_0_SUPABASE_ANON_KEY';
+        
+        log(`URL: ${supabaseUrl}`);
+        log(`Key: ${supabaseKey.substring(0, 5)}...`);
+        
+        const client = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        log('Client created, testing auth...');
+        
+        const { data, error } = await client.auth.getSession();
+        
+        if (error) {
+          log(`Error: ${error.message}`);
+          console.error(error);
+        } else {
+          log('Connection successful!');
+          log(`Session: ${JSON.stringify(data)}`);
+        }
+      } catch (e) {
+        log(`Exception: ${e.message}`);
+        console.error(e);
+      }
+    }
+    
+    testConnection();
+  </script>
+</body>
+</html> 

@@ -157,9 +157,9 @@
     </div>
 
     <script>
-        // Инициализация Supabase
-        const supabaseUrl = 'https://YOUR_SUPABASE_URL.supabase.co';
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        // Инициализация Supabase - убедитесь, что URL и ключ правильные
+        const supabaseUrl = 'https://YOUR_ACTUAL_SUPABASE_URL.supabase.co';
+        const supabaseKey = 'YOUR_ACTUAL_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
         
         // Создание Vue приложения
@@ -206,11 +206,17 @@
                     this.error = '';
                     try {
                         if (this.isLogin) {
-                            const { error } = await supabaseClient.auth.signInWithPassword({
+                            const { data, error } = await supabaseClient.auth.signInWithPassword({
                                 email: this.email,
                                 password: this.password
                             });
-                            if (error) throw error;
+                            
+                            if (error) {
+                                console.error('Login error details:', error);
+                                throw error;
+                            }
+                            
+                            console.log('Login successful:', data);
                         } else {
                             const { error } = await supabaseClient.auth.signUp({
                                 email: this.email,
@@ -220,7 +226,8 @@
                             alert('Проверьте вашу почту для подтверждения регистрации');
                         }
                     } catch (error) {
-                        this.error = error.message;
+                        console.error('Auth error:', error);
+                        this.error = `Ошибка: ${error.message || 'Failed to fetch'}`;
                     }
                 },
                 async signOut() {
