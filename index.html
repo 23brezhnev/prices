@@ -8,113 +8,88 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Управление товарами и прайс-листами</h1>
-        
-        <!-- Навигация -->
-        <div class="navigation">
-            <button class="nav-btn active" data-section="products">Товары</button>
-            <button class="nav-btn" data-section="price-lists">Прайс-листы</button>
-        </div>
+    <div id="app">
+        <!-- Компонент авторизации -->
+        <auth-component 
+            v-if="!currentUser"
+            @login="handleLogin"
+            @register="handleRegister">
+        </auth-component>
 
-        <!-- Секция товаров -->
-        <div class="page-section active" id="products-section">
-            <div class="section">
-                <div class="section-header">
-                    <h2>Список товаров</h2>
-                    <button onclick="openProductModal()" class="add-button">
-                        <i class="fas fa-plus"></i> Добавить новый товар
-                    </button>
-                </div>
-                <div id="productsList"></div>
-            </div>
-        </div>
+        <template v-else>
+            <!-- Шапка с информацией о пользователе -->
+            <header-component
+                :user="currentUser"
+                @logout="handleLogout">
+            </header-component>
 
-        <!-- Модальное окно для товара -->
-        <div id="productModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="modalTitle">Добавить товар</h2>
-                    <span class="close">&times;</span>
-                </div>
-                <form id="productForm">
-                    <div class="image-gallery" id="imageGallery">
-                        <div class="image-upload-container">
-                            <input type="file" 
-                                   id="imageInput" 
-                                   accept="image/*"
-                                   multiple
-                                   onchange="handleImageUpload(event)">
-                            <label for="imageInput" class="upload-button">Добавить фото</label>
-                        </div>
-                    </div>
-                    <input type="text" id="productName" placeholder="Название товара" required>
-                    <input type="number" id="basePrice" placeholder="Базовая цена" required>
-                    <textarea id="productDescription" 
-                              placeholder="Описание товара" 
-                              maxlength="250"
-                              rows="3"></textarea>
-                    <button type="submit">Сохранить</button>
-                </form>
-            </div>
-        </div>
+            <div class="container">
+                <h1>Управление товарами и прайс-листами</h1>
+                
+                <!-- Навигация -->
+                <nav-component
+                    :active-tab="activeTab"
+                    @change-tab="handleTabChange">
+                </nav-component>
 
-        <!-- Секция прайс-листов -->
-        <div class="page-section" id="price-lists-section">
-            <div class="section">
-                <div class="section-header">
-                    <h2>Список прайс-листов</h2>
-                    <button onclick="openPriceListModal()" class="add-button">
-                        <i class="fas fa-plus"></i> Создать прайс-лист
-                    </button>
-                </div>
-                <div id="priceListsContainer"></div>
-            </div>
-        </div>
+                <!-- Индикатор загрузки -->
+                <loading-indicator v-if="isLoading"></loading-indicator>
 
-        <!-- Модальное окно для прайс-листа -->
-        <div id="priceListModal" class="modal">
-            <div class="modal-content modal-content-large">
-                <div class="modal-header">
-                    <h2 id="priceListModalTitle">Создать прайс-лист</h2>
-                    <span class="close" onclick="closePriceListModal()">&times;</span>
-                </div>
-                <form id="priceListForm">
-                    <input type="text" id="priceListName" placeholder="Название прайс-листа" required>
-                    <div class="products-selection">
-                        <table class="products-selection-table">
-                            <thead>
-                                <tr>
-                                    <th class="checkbox-column">
-                                        <input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
-                                    </th>
-                                    <th>Товар</th>
-                                    <th>Текущая цена</th>
-                                    <th>Новая цена</th>
-                                    <th>Количество</th>
-                                    <th>Сумма</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productsSelectionBody">
-                            </tbody>
-                        </table>
-                    </div>
-                    <button type="submit">Сохранить прайс-лист</button>
-                </form>
+                <!-- Секция товаров -->
+                <products-section
+                    v-show="activeTab === 'products'"
+                    :products="products"
+                    @add-product="openProductModal"
+                    @edit-product="editProduct"
+                    @delete-product="deleteProduct">
+                </products-section>
+
+                <!-- Секция прайс-листов -->
+                <price-lists-section
+                    v-show="activeTab === 'price-lists'"
+                    :price-lists="priceLists"
+                    :products="products"
+                    @add-price-list="openPriceListModal"
+                    @edit-price-list="editPriceList"
+                    @delete-price-list="deletePriceList"
+                    @share-price-list="sharePriceList">
+                </price-lists-section>
             </div>
-        </div>
+
+            <!-- Модальные окна -->
+            <product-modal
+                v-if="showProductModal"
+                :product="editingProduct"
+                :is-editing="!!editingProduct"
+                @save="saveProduct"
+                @close="closeProductModal">
+            </product-modal>
+
+            <price-list-modal
+                v-if="showPriceListModal"
+                :price-list="editingPriceList"
+                :products="products"
+                :is-editing="!!editingPriceList"
+                @save="savePriceList"
+                @close="closePriceListModal">
+            </price-list-modal>
+        </template>
     </div>
-<<<<<<< HEAD
-=======
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script>
-        // Создаем глобальную переменную createClient
-        const { createClient } = supabase;
-    </script>
+
+    <!-- Подключаем компоненты и основной скрипт -->
+    <script src="components/AuthComponent.js"></script>
+    <script src="components/HeaderComponent.js"></script>
+    <script src="components/NavComponent.js"></script>
+    <script src="components/LoadingIndicator.js"></script>
+    <script src="components/ProductsSection.js"></script>
+    <script src="components/PriceListsSection.js"></script>
+    <script src="components/ProductModal.js"></script>
+    <script src="components/PriceListModal.js"></script>
     <script src="supabase-config.js"></script>
->>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
     <script src="app.js"></script>
 </body>
 </html> 
