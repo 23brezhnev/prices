@@ -8,88 +8,109 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Добавляем стили для v-cloak сразу -->
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <template v-cloak>
-            <!-- Компонент авторизации -->
-            <auth-component 
-                v-if="!currentUser"
-                @login="handleLogin"
-                @register="handleRegister">
-            </auth-component>
+    <!-- Добавляем индикатор начальной загрузки -->
+    <div id="initial-loading" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    ">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="margin-top: 16px; color: #64748b;">Загрузка приложения...</p>
+        </div>
+    </div>
 
-            <template v-else>
-                <!-- Шапка с информацией о пользователе -->
-                <header-component
-                    :user="currentUser"
-                    @logout="handleLogout">
-                </header-component>
+    <div id="app" v-cloak>
+        <!-- Компонент авторизации -->
+        <auth-component 
+            v-if="!currentUser"
+            @login="handleLogin"
+            @register="handleRegister">
+        </auth-component>
 
-                <div class="container">
-                    <h1>Управление товарами и прайс-листами</h1>
-                    
-                    <!-- Навигация -->
-                    <nav-component
-                        :active-tab="activeTab"
-                        @change-tab="handleTabChange">
-                    </nav-component>
+        <template v-else>
+            <!-- Шапка с информацией о пользователе -->
+            <header-component
+                :user="currentUser"
+                @logout="handleLogout">
+            </header-component>
 
-                    <!-- Индикатор загрузки -->
-                    <loading-indicator v-if="isLoading"></loading-indicator>
+            <div class="container">
+                <h1>Управление товарами и прайс-листами</h1>
+                
+                <!-- Навигация -->
+                <nav-component
+                    :active-tab="activeTab"
+                    @change-tab="handleTabChange">
+                </nav-component>
 
-                    <!-- Секция товаров -->
-                    <products-section
-                        v-show="activeTab === 'products'"
-                        :products="products"
-                        @add-product="openProductModal"
-                        @edit-product="editProduct"
-                        @delete-product="deleteProduct">
-                    </products-section>
+                <!-- Индикатор загрузки -->
+                <loading-indicator v-if="isLoading"></loading-indicator>
 
-                    <!-- Секция прайс-листов -->
-                    <price-lists-section
-                        v-show="activeTab === 'price-lists'"
-                        :price-lists="priceLists"
-                        :products="products"
-                        @add-price-list="openPriceListModal"
-                        @edit-price-list="editPriceList"
-                        @delete-price-list="deletePriceList"
-                        @share-price-list="sharePriceList">
-                    </price-lists-section>
-                </div>
-
-                <!-- Модальные окна -->
-                <product-modal
-                    v-if="showProductModal"
-                    :product="editingProduct"
-                    :is-editing="!!editingProduct"
-                    @save="saveProduct"
-                    @close="closeProductModal">
-                </product-modal>
-
-                <price-list-modal
-                    v-if="showPriceListModal"
-                    :price-list="editingPriceList"
+                <!-- Секция товаров -->
+                <products-section
+                    v-show="activeTab === 'products'"
                     :products="products"
-                    :is-editing="!!editingPriceList"
-                    @save="savePriceList"
-                    @close="closePriceListModal">
-                </price-list-modal>
-            </template>
+                    @add-product="openProductModal"
+                    @edit-product="editProduct"
+                    @delete-product="deleteProduct">
+                </products-section>
+
+                <!-- Секция прайс-листов -->
+                <price-lists-section
+                    v-show="activeTab === 'price-lists'"
+                    :price-lists="priceLists"
+                    :products="products"
+                    @add-price-list="openPriceListModal"
+                    @edit-price-list="editPriceList"
+                    @delete-price-list="deletePriceList"
+                    @share-price-list="sharePriceList">
+                </price-lists-section>
+            </div>
+
+            <!-- Модальные окна -->
+            <product-modal
+                v-if="showProductModal"
+                :product="editingProduct"
+                :is-editing="!!editingProduct"
+                @save="saveProduct"
+                @close="closeProductModal">
+            </product-modal>
+
+            <price-list-modal
+                v-if="showPriceListModal"
+                :price-list="editingPriceList"
+                :products="products"
+                :is-editing="!!editingPriceList"
+                @save="savePriceList"
+                @close="closePriceListModal">
+            </price-list-modal>
         </template>
     </div>
 
-    <!-- Конфигурация Supabase -->
-    <script>
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    </script>
+    <!-- Загружаем Vue и Supabase -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Загружаем конфигурацию Supabase -->
+    <script src="supabase-config.js"></script>
 
-    <!-- Подключаем компоненты -->
+    <!-- Загружаем компоненты -->
     <script src="components/AuthComponent.js"></script>
     <script src="components/HeaderComponent.js"></script>
     <script src="components/NavComponent.js"></script>
@@ -99,13 +120,21 @@
     <script src="components/ProductModal.js"></script>
     <script src="components/PriceListModal.js"></script>
     
-    <!-- Основной скрипт приложения -->
+    <!-- Загружаем и инициализируем приложение -->
     <script src="app.js"></script>
 
-    <style>
-        [v-cloak] {
-            display: none;
-        }
-    </style>
+    <script>
+        // Скрываем индикатор загрузки после монтирования Vue
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loading = document.getElementById('initial-loading');
+                if (loading) {
+                    loading.style.opacity = '0';
+                    loading.style.transition = 'opacity 0.3s';
+                    setTimeout(() => loading.remove(), 300);
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html> 

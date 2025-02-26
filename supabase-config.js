@@ -1,8 +1,13 @@
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// Проверяем наличие переменных окружения
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    console.error('Supabase environment variables are not set');
+}
+
+const SUPABASE_URL = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
 // Создаем клиент Supabase
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Проверяем подключение
 supabase.auth.onAuthStateChange((event, session) => {
