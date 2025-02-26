@@ -1,15 +1,15 @@
-const SUPABASE_URL = 'https://eeamyvvtzxbtdngdnofc.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlYW15dnZ0enhidGRuZ2Rub2ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA0MjAyMTUsImV4cCI6MjA1NTk5NjIxNX0.tjAJ0ZvyqOcJKI2P1bhXts4higZzemZskAx2OZ-P6_0'
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-// Создаем клиента Supabase
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+// Создаем клиент Supabase
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Проверяем подключение
-supabase.from('products').select('count')
-    .then(response => {
-        if (response.error) {
-            console.error('Ошибка подключения:', response.error);
-        } else {
-            console.log('Подключение к Supabase успешно');
-        }
-    }); 
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log('Supabase auth event:', event);
+    if (session) {
+        console.log('User is authenticated');
+    } else {
+        console.log('User is not authenticated');
+    }
+}); 
