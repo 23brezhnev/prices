@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Auth Test</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h1>Supabase Auth Test</h1>
+  
+  <div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" value="">
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" value="">
+  </div>
+  <button id="loginBtn">Login</button>
+  <button id="signupBtn">Sign Up</button>
+  
+  <div id="result" style="margin-top: 20px;"></div>
+  
+  <script>
+    const resultDiv = document.getElementById('result');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    
+    // Инициализация Supabase
+    const supabaseUrl = 'https://YOUR_ACTUAL_SUPABASE_URL.supabase.co';
+    const supabaseKey = 'YOUR_ACTUAL_SUPABASE_ANON_KEY';
+    
+    // Проверяем, что URL и ключ указаны
+    if (!supabaseUrl.includes('YOUR_ACTUAL') && !supabaseKey.includes('YOUR_ACTUAL')) {
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+      
+      // Функция для входа
+      loginBtn.addEventListener('click', async () => {
+        resultDiv.textContent = 'Выполняется вход...';
+        
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          
+          if (error) {
+            resultDiv.textContent = `Ошибка входа: ${error.message}`;
+            console.error('Login error:', error);
+          } else {
+            resultDiv.textContent = `Успешный вход! User ID: ${data.user.id}`;
+            console.log('Login successful:', data);
+          }
+        } catch (e) {
+          resultDiv.textContent = `Исключение: ${e.message}`;
+          console.error('Exception:', e);
+        }
+      });
+      
+      // Функция для регистрации
+      signupBtn.addEventListener('click', async () => {
+        resultDiv.textContent = 'Выполняется регистрация...';
+        
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email: emailInput.value,
+            password: passwordInput.value
+          });
+          
+          if (error) {
+            resultDiv.textContent = `Ошибка регистрации: ${error.message}`;
+            console.error('Signup error:', error);
+          } else {
+            resultDiv.textContent = 'Регистрация успешна! Проверьте почту для подтверждения.';
+            console.log('Signup successful:', data);
+          }
+        } catch (e) {
+          resultDiv.textContent = `Исключение: ${e.message}`;
+          console.error('Exception:', e);
+        }
+      });
+    } else {
+      resultDiv.textContent = 'Пожалуйста, укажите правильные URL и ключ Supabase в коде.';
+    }
+  </script>
+</body>
+</html> 

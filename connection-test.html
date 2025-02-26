@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Supabase Connection Test</title>
+</head>
+<body>
+  <h1>Supabase Connection Test</h1>
+  <div id="result"></div>
+
+  <script>
+    const resultDiv = document.getElementById('result');
+    
+    // Проверяем доступность Supabase через fetch
+    async function testConnection() {
+      resultDiv.innerHTML = 'Тестирование соединения...';
+      
+      try {
+        // Проверяем доступность домена supabase.co
+        const response = await fetch('https://supabase.co/ping');
+        const text = await response.text();
+        
+        resultDiv.innerHTML += '<p>Соединение с supabase.co: УСПЕШНО</p>';
+        
+        // Проверяем ваш конкретный проект
+        const supabaseUrl = 'https://YOUR_ACTUAL_SUPABASE_URL.supabase.co';
+        const pingUrl = `${supabaseUrl}/rest/v1/?apikey=ANON_KEY`;
+        
+        resultDiv.innerHTML += `<p>Тестирование URL: ${supabaseUrl}</p>`;
+        
+        try {
+          const projectResponse = await fetch(pingUrl);
+          const projectStatus = projectResponse.status;
+          
+          resultDiv.innerHTML += `<p>Статус ответа: ${projectStatus}</p>`;
+          
+          if (projectStatus === 200 || projectStatus === 401) {
+            resultDiv.innerHTML += '<p>Соединение с проектом: УСПЕШНО</p>';
+          } else {
+            resultDiv.innerHTML += '<p>Соединение с проектом: ОШИБКА</p>';
+          }
+        } catch (projectError) {
+          resultDiv.innerHTML += `<p>Ошибка соединения с проектом: ${projectError.message}</p>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML += `<p>Ошибка соединения: ${error.message}</p>`;
+      }
+    }
+    
+    testConnection();
+  </script>
+</body>
+</html> 
