@@ -8,85 +8,97 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     
     <!-- Ant Design Vue -->
-    <script src="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.css">
+    <link href="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.min.js"></script>
     
     <!-- Конфигурация -->
     <script src="config.js"></script>
 </head>
 <body>
     <div id="app">
-        <a-layout>
-            <a-layout-content style="padding: 24px">
-                <!-- Форма авторизации -->
-                <a-card v-if="!user" style="max-width: 400px; margin: 0 auto">
-                    <a-tabs v-model:activeKey="isLogin ? '1' : '2'">
-                        <a-tab-pane key="1" tab="Вход">
+        <a-spin :spinning="loading" tip="Загрузка...">
+            <a-layout>
+                <a-layout-content style="padding: 24px">
+                    <!-- Сообщение об ошибке -->
+                    <a-alert
+                        v-if="error"
+                        :message="error"
+                        type="error"
+                        style="margin-bottom: 16px"
+                        closable
+                        @close="error = ''"
+                    />
+
+                    <!-- Форма авторизации -->
+                    <a-card v-if="!user" style="max-width: 400px; margin: 0 auto">
+                        <a-tabs v-model:activeKey="isLogin ? '1' : '2'">
+                            <a-tab-pane key="1" tab="Вход">
+                                <a-form layout="vertical">
+                                    <a-form-item label="Email">
+                                        <a-input v-model:value="email" placeholder="Введите email" />
+                                    </a-form-item>
+                                    <a-form-item label="Пароль">
+                                        <a-input-password v-model:value="password" placeholder="Введите пароль" />
+                                    </a-form-item>
+                                    <a-form-item>
+                                        <a-button type="primary" @click="handleAuth" :loading="loading">
+                                            {{ isLogin ? 'Войти' : 'Зарегистрироваться' }}
+                                        </a-button>
+                                    </a-form-item>
+                                </a-form>
+                            </a-tab-pane>
+                        </a-tabs>
+                    </a-card>
+
+                    <!-- Список товаров -->
+                    <div v-else>
+                        <a-row :gutter="[16, 16]">
+                            <a-col :span="24">
+                                <a-button type="primary" @click="showAddProduct = true">
+                                    Добавить товар
+                                </a-button>
+                            </a-col>
+                            
+                            <a-col :span="24">
+                                <a-table :dataSource="products" :columns="columns">
+                                    <template #bodyCell="{ column, record }">
+                                        <template v-if="column.key === 'action'">
+                                            <a-space>
+                                                <a-button type="link" @click="editProduct(record)">
+                                                    Редактировать
+                                                </a-button>
+                                                <a-button type="link" danger @click="deleteProduct(record.id)">
+                                                    Удалить
+                                                </a-button>
+                                            </a-space>
+                                        </template>
+                                    </template>
+                                </a-table>
+                            </a-col>
+                        </a-row>
+
+                        <!-- Модальное окно добавления/редактирования товара -->
+                        <a-modal
+                            v-model:visible="showAddProduct"
+                            :title="editingProduct ? 'Редактировать товар' : 'Добавить товар'"
+                            @ok="saveProduct"
+                        >
                             <a-form layout="vertical">
-                                <a-form-item label="Email">
-                                    <a-input v-model:value="email" placeholder="Введите email" />
+                                <a-form-item label="Название">
+                                    <a-input v-model:value="newProduct.name" />
                                 </a-form-item>
-                                <a-form-item label="Пароль">
-                                    <a-input-password v-model:value="password" placeholder="Введите пароль" />
+                                <a-form-item label="Цена">
+                                    <a-input-number v-model:value="newProduct.price" :min="0" style="width: 100%" />
                                 </a-form-item>
-                                <a-form-item>
-                                    <a-button type="primary" @click="handleAuth" :loading="loading">
-                                        {{ isLogin ? 'Войти' : 'Зарегистрироваться' }}
-                                    </a-button>
+                                <a-form-item label="Описание">
+                                    <a-textarea v-model:value="newProduct.description" />
                                 </a-form-item>
                             </a-form>
-                        </a-tab-pane>
-                    </a-tabs>
-                </a-card>
-
-                <!-- Список товаров -->
-                <div v-else>
-                    <a-row :gutter="[16, 16]">
-                        <a-col :span="24">
-                            <a-button type="primary" @click="showAddProduct = true">
-                                Добавить товар
-                            </a-button>
-                        </a-col>
-                        
-                        <a-col :span="24">
-                            <a-table :dataSource="products" :columns="columns">
-                                <template #bodyCell="{ column, record }">
-                                    <template v-if="column.key === 'action'">
-                                        <a-space>
-                                            <a-button type="link" @click="editProduct(record)">
-                                                Редактировать
-                                            </a-button>
-                                            <a-button type="link" danger @click="deleteProduct(record.id)">
-                                                Удалить
-                                            </a-button>
-                                        </a-space>
-                                    </template>
-                                </template>
-                            </a-table>
-                        </a-col>
-                    </a-row>
-
-                    <!-- Модальное окно добавления/редактирования товара -->
-                    <a-modal
-                        v-model:visible="showAddProduct"
-                        :title="editingProduct ? 'Редактировать товар' : 'Добавить товар'"
-                        @ok="saveProduct"
-                    >
-                        <a-form layout="vertical">
-                            <a-form-item label="Название">
-                                <a-input v-model:value="newProduct.name" />
-                            </a-form-item>
-                            <a-form-item label="Цена">
-                                <a-input-number v-model:value="newProduct.price" :min="0" style="width: 100%" />
-                            </a-form-item>
-                            <a-form-item label="Описание">
-                                <a-textarea v-model:value="newProduct.description" />
-                            </a-form-item>
-                        </a-form>
-                    </a-modal>
-                </div>
-            </a-layout-content>
-        </a-layout>
+                        </a-modal>
+                    </div>
+                </a-layout-content>
+            </a-layout>
+        </a-spin>
     </div>
 
 <script>
@@ -117,7 +129,7 @@ const {
 const app = createApp({
     data() {
         return {
-            loading: true,
+            loading: false,
             user: null,
             isLogin: true,
             email: '',
@@ -265,8 +277,13 @@ const app = createApp({
 
     async mounted() {
         try {
+            this.loading = true;
+            console.log('Mounted hook started');
+            
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
+            
+            console.log('Session checked:', session);
             
             if (session) {
                 this.user = session.user;
@@ -274,6 +291,7 @@ const app = createApp({
             }
 
             supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event);
                 if (event === 'SIGNED_IN' && session) {
                     this.user = session.user;
                     this.loadProducts();
@@ -287,31 +305,44 @@ const app = createApp({
             this.error = error.message;
         } finally {
             this.loading = false;
+            console.log('Mounted hook completed');
         }
     }
 });
 
-// Регистрация компонентов Ant Design
-app.component('a-button', Button);
-app.component('a-layout', Layout);
-app.component('a-layout-content', Layout.Content);
-app.component('a-card', Card);
-app.component('a-tabs', Tabs);
-app.component('a-tab-pane', Tabs.TabPane);
-app.component('a-form', Form);
-app.component('a-form-item', Form.Item);
-app.component('a-input', Input);
-app.component('a-input-password', Input.Password);
-app.component('a-input-number', InputNumber);
-app.component('a-modal', Modal);
-app.component('a-table', Table);
-app.component('a-row', Row);
-app.component('a-col', Col);
-app.component('a-space', Space);
-app.component('a-textarea', Input.TextArea);
+// Регистрируем компоненты Ant Design
+const components = {
+    'a-layout': antd.Layout,
+    'a-layout-content': antd.Layout.Content,
+    'a-card': antd.Card,
+    'a-tabs': antd.Tabs,
+    'a-tab-pane': antd.Tabs.TabPane,
+    'a-form': antd.Form,
+    'a-form-item': antd.Form.Item,
+    'a-input': antd.Input,
+    'a-input-password': antd.Input.Password,
+    'a-input-number': antd.InputNumber,
+    'a-button': antd.Button,
+    'a-modal': antd.Modal,
+    'a-table': antd.Table,
+    'a-row': antd.Row,
+    'a-col': antd.Col,
+    'a-space': antd.Space,
+    'a-textarea': antd.Input.TextArea,
+    'a-spin': antd.Spin,
+    'a-alert': antd.Alert
+};
 
-// Монтирование приложения
+// Регистрируем все компоненты
+Object.entries(components).forEach(([name, component]) => {
+    app.component(name, component);
+});
+
+// Монтируем приложение
 app.mount('#app');
+
+// Добавляем отладочную информацию
+console.log('App mounted');
 </script>
 </body>
 </html> 
