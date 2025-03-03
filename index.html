@@ -1,3 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Добавляем стили Ant Design -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.css">
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.js"></script>
+</head>
+<body>
+    <div id="app">
+        <a-layout>
+            <a-layout-content style="padding: 24px">
+                <!-- Форма авторизации -->
+                <a-card v-if="!user" style="max-width: 400px; margin: 0 auto">
+                    <a-tabs v-model:activeKey="isLogin ? '1' : '2'">
+                        <a-tab-pane key="1" tab="Вход">
+                            <a-form layout="vertical">
+                                <a-form-item label="Email">
+                                    <a-input v-model:value="email" placeholder="Введите email" />
+                                </a-form-item>
+                                <a-form-item label="Пароль">
+                                    <a-input-password v-model:value="password" placeholder="Введите пароль" />
+                                </a-form-item>
+                                <a-form-item>
+                                    <a-button type="primary" @click="handleAuth" :loading="loading">
+                                        {{ isLogin ? 'Войти' : 'Зарегистрироваться' }}
+                                    </a-button>
+                                </a-form-item>
+                            </a-form>
+                        </a-tab-pane>
+                    </a-tabs>
+                </a-card>
+
+                <!-- Список товаров -->
+                <div v-else>
+                    <a-row :gutter="[16, 16]">
+                        <a-col :span="24">
+                            <a-button type="primary" @click="showAddProduct = true">
+                                Добавить товар
+                            </a-button>
+                        </a-col>
+                        
+                        <a-col :span="24">
+                            <a-table :dataSource="products" :columns="columns">
+                                <template #bodyCell="{ column, record }">
+                                    <template v-if="column.key === 'action'">
+                                        <a-space>
+                                            <a-button type="link" @click="editProduct(record)">
+                                                Редактировать
+                                            </a-button>
+                                            <a-button type="link" danger @click="deleteProduct(record.id)">
+                                                Удалить
+                                            </a-button>
+                                        </a-space>
+                                    </template>
+                                </template>
+                            </a-table>
+                        </a-col>
+                    </a-row>
+
+                    <!-- Модальное окно добавления/редактирования товара -->
+                    <a-modal
+                        v-model:visible="showAddProduct"
+                        :title="editingProduct ? 'Редактировать товар' : 'Добавить товар'"
+                        @ok="saveProduct"
+                    >
+                        <a-form layout="vertical">
+                            <a-form-item label="Название">
+                                <a-input v-model:value="newProduct.name" />
+                            </a-form-item>
+                            <a-form-item label="Цена">
+                                <a-input-number v-model:value="newProduct.price" :min="0" style="width: 100%" />
+                            </a-form-item>
+                            <a-form-item label="Описание">
+                                <a-textarea v-model:value="newProduct.description" />
+                            </a-form-item>
+                        </a-form>
+                    </a-modal>
+                </div>
+            </a-layout-content>
+        </a-layout>
+    </div>
+
+<script>
 // Инициализация Supabase
 const supabase = supabase.createClient(
   'https://ваш-проект-id.supabase.co',
@@ -21,7 +104,28 @@ const app = Vue.createApp({
         name: '',
         price: 0,
         description: ''
-      }
+      },
+      columns: [
+        {
+          title: 'Название',
+          dataIndex: 'name',
+          key: 'name',
+        },
+        {
+          title: 'Цена',
+          dataIndex: 'price',
+          key: 'price',
+        },
+        {
+          title: 'Описание',
+          dataIndex: 'description',
+          key: 'description',
+        },
+        {
+          title: 'Действия',
+          key: 'action',
+        },
+      ],
     }
   },
   methods: {
@@ -128,7 +232,13 @@ const app = Vue.createApp({
         console.error('Ошибка при удалении товара:', error);
         this.error = error.message;
       }
-    }
+    },
+
+    editProduct(product) {
+      this.editingProduct = product;
+      this.newProduct = { ...product };
+      this.showAddProduct = true;
+    },
   },
 
   // Хук mounted
@@ -160,6 +270,9 @@ const app = Vue.createApp({
     }
   }
 });
+
+// Добавляем Ant Design компоненты
+app.use(antd);
 
 // Монтирование приложения
 app.mount('#app');
