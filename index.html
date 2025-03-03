@@ -8,9 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     
     <!-- Ant Design Vue -->
-    <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.css">
-    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.7/dist/reset.css">
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.7/dist/antd-with-locales.min.js"></script>
     
     <!-- Конфигурация -->
     <script src="config.js"></script>
@@ -277,7 +277,8 @@ const app = createApp({
     }
 });
 
-app.use(antd);
+// Правильное подключение Ant Design Vue
+app.use(antd.default);
 
 app.mount('#app');
 </script>
