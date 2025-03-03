@@ -5,11 +5,12 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     
     <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     
     <!-- Ant Design Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.css">
-    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.min.js"></script>
     
     <!-- Конфигурация -->
     <script src="config.js"></script>
@@ -91,199 +92,193 @@
 
 <script>
 // Инициализация Supabase
-const supabase = supabase.createClient(
-  SUPABASE_CONFIG.SUPABASE_URL,
-  SUPABASE_CONFIG.SUPABASE_KEY
+const { createClient } = supabase;
+const supabaseClient = createClient(
+    SUPABASE_CONFIG.SUPABASE_URL,
+    SUPABASE_CONFIG.SUPABASE_KEY
 );
 
 // Создание Vue приложения
-const app = Vue.createApp({
-  data() {
-    return {
-      loading: true,
-      user: null,
-      isLogin: true,
-      email: '',
-      password: '',
-      error: '',
-      products: [],
-      showAddProduct: false,
-      editingProduct: null,
-      newProduct: {
-        name: '',
-        price: 0,
-        description: ''
-      },
-      columns: [
-        {
-          title: 'Название',
-          dataIndex: 'name',
-          key: 'name',
+const { createApp } = Vue;
+const app = createApp({
+    data() {
+        return {
+            loading: true,
+            user: null,
+            isLogin: true,
+            email: '',
+            password: '',
+            error: '',
+            products: [],
+            showAddProduct: false,
+            editingProduct: null,
+            newProduct: {
+                name: '',
+                price: 0,
+                description: ''
+            },
+            columns: [
+                {
+                    title: 'Название',
+                    dataIndex: 'name',
+                    key: 'name',
+                },
+                {
+                    title: 'Цена',
+                    dataIndex: 'price',
+                    key: 'price',
+                },
+                {
+                    title: 'Описание',
+                    dataIndex: 'description',
+                    key: 'description',
+                },
+                {
+                    title: 'Действия',
+                    key: 'action',
+                },
+            ],
+        }
+    },
+    methods: {
+        async handleAuth() {
+            try {
+                this.error = '';
+                if (this.isLogin) {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: this.email,
+                        password: this.password
+                    });
+                    if (error) throw error;
+                    this.user = data.user;
+                } else {
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email: this.email,
+                        password: this.password
+                    });
+                    if (error) throw error;
+                    this.user = data.user;
+                }
+                this.email = '';
+                this.password = '';
+                await this.loadProducts();
+            } catch (error) {
+                console.error('Ошибка авторизации:', error);
+                this.error = error.message;
+            }
         },
-        {
-          title: 'Цена',
-          dataIndex: 'price',
-          key: 'price',
+
+        async loadProducts() {
+            try {
+                if (!this.user) {
+                    console.log('Пользователь не авторизован');
+                    return;
+                }
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .eq('user_id', this.user.id);
+                
+                if (error) throw error;
+                this.products = data || [];
+                console.log('Товары загружены:', this.products);
+            } catch (error) {
+                console.error('Ошибка при загрузке товаров:', error);
+                this.error = error.message;
+            }
         },
-        {
-          title: 'Описание',
-          dataIndex: 'description',
-          key: 'description',
+
+        async saveProduct() {
+            try {
+                if (!this.user) {
+                    this.error = 'Пользователь не авторизован';
+                    return;
+                }
+
+                const productData = {
+                    name: this.newProduct.name,
+                    price: this.newProduct.price,
+                    description: this.newProduct.description,
+                    user_id: this.user.id
+                };
+
+                let response;
+                if (this.editingProduct) {
+                    response = await supabaseClient
+                        .from('products')
+                        .update(productData)
+                        .eq('id', this.editingProduct.id);
+                } else {
+                    response = await supabaseClient
+                        .from('products')
+                        .insert([productData]);
+                }
+
+                if (response.error) throw response.error;
+
+                await this.loadProducts();
+                this.newProduct = { name: '', price: 0, description: '' };
+                this.editingProduct = null;
+                this.showAddProduct = false;
+            } catch (error) {
+                console.error('Ошибка при сохранении товара:', error);
+                this.error = error.message;
+            }
         },
-        {
-          title: 'Действия',
-          key: 'action',
+
+        async deleteProduct(id) {
+            if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('products')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) throw error;
+                await this.loadProducts();
+            } catch (error) {
+                console.error('Ошибка при удалении товара:', error);
+                this.error = error.message;
+            }
         },
-      ],
+
+        editProduct(product) {
+            this.editingProduct = product;
+            this.newProduct = { ...product };
+            this.showAddProduct = true;
+        },
+    },
+
+    async mounted() {
+        try {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (error) throw error;
+            
+            if (session) {
+                this.user = session.user;
+                await this.loadProducts();
+            }
+
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    this.user = session.user;
+                    this.loadProducts();
+                } else if (event === 'SIGNED_OUT') {
+                    this.user = null;
+                    this.products = [];
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка при инициализации:', error);
+            this.error = error.message;
+        } finally {
+            this.loading = false;
+        }
     }
-  },
-  methods: {
-    // Метод авторизации
-    async handleAuth() {
-      try {
-        this.error = '';
-        if (this.isLogin) {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: this.email,
-            password: this.password
-          });
-          if (error) throw error;
-          this.user = data.user;
-        } else {
-          const { data, error } = await supabase.auth.signUp({
-            email: this.email,
-            password: this.password
-          });
-          if (error) throw error;
-          this.user = data.user;
-        }
-        this.email = '';
-        this.password = '';
-        await this.loadProducts();
-      } catch (error) {
-        console.error('Ошибка авторизации:', error);
-        this.error = error.message;
-      }
-    },
-
-    // Загрузка товаров
-    async loadProducts() {
-      try {
-        if (!this.user) {
-          console.log('Пользователь не авторизован');
-          return;
-        }
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('user_id', this.user.id);
-        
-        if (error) throw error;
-        this.products = data || [];
-        console.log('Товары загружены:', this.products);
-      } catch (error) {
-        console.error('Ошибка при загрузке товаров:', error);
-        this.error = error.message;
-      }
-    },
-
-    // Сохранение товара
-    async saveProduct() {
-      try {
-        if (!this.user) {
-          this.error = 'Пользователь не авторизован';
-          return;
-        }
-
-        const productData = {
-          name: this.newProduct.name,
-          price: this.newProduct.price,
-          description: this.newProduct.description,
-          user_id: this.user.id
-        };
-
-        let response;
-        if (this.editingProduct) {
-          response = await supabase
-            .from('products')
-            .update(productData)
-            .eq('id', this.editingProduct.id);
-        } else {
-          response = await supabase
-            .from('products')
-            .insert([productData]);
-        }
-
-        if (response.error) throw response.error;
-
-        await this.loadProducts();
-        this.newProduct = { name: '', price: 0, description: '' };
-        this.editingProduct = null;
-        this.showAddProduct = false;
-      } catch (error) {
-        console.error('Ошибка при сохранении товара:', error);
-        this.error = error.message;
-      }
-    },
-
-    // Удаление товара
-    async deleteProduct(id) {
-      if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
-      try {
-        const { error } = await supabase
-          .from('products')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-        await this.loadProducts();
-      } catch (error) {
-        console.error('Ошибка при удалении товара:', error);
-        this.error = error.message;
-      }
-    },
-
-    editProduct(product) {
-      this.editingProduct = product;
-      this.newProduct = { ...product };
-      this.showAddProduct = true;
-    },
-  },
-
-  // Хук mounted
-  async mounted() {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) throw error;
-      
-      if (session) {
-        this.user = session.user;
-        await this.loadProducts();
-      }
-
-      // Подписка на изменения авторизации
-      supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          this.user = session.user;
-          this.loadProducts();
-        } else if (event === 'SIGNED_OUT') {
-          this.user = null;
-          this.products = [];
-        }
-      });
-    } catch (error) {
-      console.error('Ошибка при инициализации:', error);
-      this.error = error.message;
-    } finally {
-      this.loading = false;
-    }
-  }
 });
 
-// Добавляем Ant Design компоненты
 app.use(antd);
 
-// Монтирование приложения
 app.mount('#app');
 </script>
 </body>
