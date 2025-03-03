@@ -4,6 +4,7 @@
     <!-- Добавляем стили Ant Design -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.css">
     <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.0/dist/antd.js"></script>
+    <script src="config.js"></script>
 </head>
 <body>
     <div id="app">
@@ -83,8 +84,8 @@
 <script>
 // Инициализация Supabase
 const supabase = supabase.createClient(
-  'https://ваш-проект-id.supabase.co',
-  'ваш-публичный-ключ'
+  SUPABASE_CONFIG.SUPABASE_URL,
+  SUPABASE_CONFIG.SUPABASE_KEY
 );
 
 // Создание Vue приложения
