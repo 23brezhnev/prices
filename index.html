@@ -8,9 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
     
     <!-- Ant Design Vue -->
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.7/dist/reset.css">
-    <script src="https://cdn.jsdelivr.net/npm/ant-design-vue@4.0.7/dist/antd-with-locales.min.js"></script>
+    <script src="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.css">
     
     <!-- Конфигурация -->
     <script src="config.js"></script>
@@ -100,6 +99,21 @@ const supabaseClient = createClient(
 
 // Создание Vue приложения
 const { createApp } = Vue;
+const { 
+    Button, 
+    Layout, 
+    Card, 
+    Tabs, 
+    Form, 
+    Input, 
+    Modal, 
+    Table, 
+    Row, 
+    Col, 
+    Space,
+    InputNumber 
+} = antd;
+
 const app = createApp({
     data() {
         return {
@@ -277,9 +291,26 @@ const app = createApp({
     }
 });
 
-// Правильное подключение Ant Design Vue
-app.use(antd.default);
+// Регистрация компонентов Ant Design
+app.component('a-button', Button);
+app.component('a-layout', Layout);
+app.component('a-layout-content', Layout.Content);
+app.component('a-card', Card);
+app.component('a-tabs', Tabs);
+app.component('a-tab-pane', Tabs.TabPane);
+app.component('a-form', Form);
+app.component('a-form-item', Form.Item);
+app.component('a-input', Input);
+app.component('a-input-password', Input.Password);
+app.component('a-input-number', InputNumber);
+app.component('a-modal', Modal);
+app.component('a-table', Table);
+app.component('a-row', Row);
+app.component('a-col', Col);
+app.component('a-space', Space);
+app.component('a-textarea', Input.TextArea);
 
+// Монтирование приложения
 app.mount('#app');
 </script>
 </body>
