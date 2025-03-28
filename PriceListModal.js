@@ -8,7 +8,8 @@ const PriceListModal = {
       form: {
         name: '',
         description: '',
-        items: []
+        items: [],
+        is_public: false
       },
       selectedProduct: null,
       quantity: 1,
@@ -21,6 +22,7 @@ const PriceListModal = {
     if (this.priceList) {
       this.form.name = this.priceList.name || '';
       this.form.description = this.priceList.description || '';
+      this.form.is_public = this.priceList.is_public || false;
       
       // Преобразуем элементы прайс-листа в нужный формат
       if (this.priceList.price_list_items) {
@@ -75,6 +77,13 @@ const PriceListModal = {
               placeholder="Введите описание прайс-листа"
               rows="2"
             ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="form.is_public">
+              Сделать прайс-лист публичным (доступен по ссылке без авторизации)
+            </label>
           </div>
           
           <div class="price-list-items-section">
@@ -225,6 +234,7 @@ const PriceListModal = {
         const priceListData = {
           name: this.form.name.trim(),
           description: this.form.description.trim(),
+          is_public: this.form.is_public,
           user_id: user.id
         };
         

@@ -7,36 +7,44 @@ function loadPriceList() {
     const urlParams = new URLSearchParams(window.location.search);
     const priceListId = urlParams.get('id');
     
-<<<<<<< HEAD
-    // Получаем данные из localStorage (в реальном приложении здесь был бы запрос к серверу)
-    const savedPriceLists = JSON.parse(localStorage.getItem('priceLists')) || [];
-    const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
-    
-    priceList = savedPriceLists.find(pl => pl.id === parseInt(priceListId));
-    products = savedProducts;
-    
-    if (!priceList) {
-        document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
-        return;
-    }
-    
-    renderPriceList();
-=======
-    // Загружаем прайс-лист
-    database.ref(`priceLists/${priceListId}`).once('value', (snapshot) => {
-        priceList = snapshot.val();
-        if (!priceList) {
-            document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
-            return;
-        }
-        
-        // Загружаем все товары
-        database.ref('products').once('value', (snapshot) => {
-            products = snapshot.val() || [];
-            renderPriceList();
+    // Загружаем прайс-лист из Supabase
+    const supabase = window.supabase.createClient(
+        SUPABASE_CONFIG.SUPABASE_URL,
+        SUPABASE_CONFIG.SUPABASE_KEY
+    );
+
+    // Загружаем прайс-лист по ID
+    supabase
+        .from('price_lists')
+        .select('*')
+        .eq('id', priceListId)
+        .single()
+        .then(response => {
+            if (response.error) {
+                document.body.innerHTML = '<h1>Ошибка загрузки прайс-листа</h1>';
+                console.error(response.error);
+                return;
+            }
+
+            priceList = response.data;
+            if (!priceList) {
+                document.body.innerHTML = '<h1>Прайс-лист не найден</h1>';
+                return;
+            }
+            
+            // Загружаем все товары
+            supabase
+                .from('products')
+                .select('*')
+                .then(response => {
+                    if (response.error) {
+                        console.error(response.error);
+                        return;
+                    }
+                    products = response.data || [];
+                    renderPriceList();
+                });
         });
-    });
->>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 function renderPriceList() {
@@ -169,42 +177,38 @@ function sendOrder(e) {
     e.preventDefault();
     
     const orderData = {
-        priceListId: priceList.id,
-        customerName: document.getElementById('customerName').value,
-        customerPhone: document.getElementById('customerPhone').value,
-        customerEmail: document.getElementById('customerEmail').value,
-        customerComment: document.getElementById('customerComment').value,
+        price_list_id: priceList.id,
+        customer_name: document.getElementById('customerName').value,
+        customer_phone: document.getElementById('customerPhone').value,
+        customer_email: document.getElementById('customerEmail').value,
+        customer_comment: document.getElementById('customerComment').value,
         items: cart,
-<<<<<<< HEAD
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-    };
-    
-    // В реальном приложении здесь был бы запрос к серверу
-    console.log('Отправка заказа:', orderData);
-    alert('Заказ успешно отправлен!');
-    
-    // Очищаем корзину и закрываем форму
-    cart = [];
-    updateCartCount();
-    toggleOrderForm();
-=======
         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        createdAt: firebase.database.ServerValue.TIMESTAMP
+        created_at: new Date().toISOString()
     };
+    
+    // Создаем клиент Supabase
+    const supabase = window.supabase.createClient(
+        SUPABASE_CONFIG.SUPABASE_URL,
+        SUPABASE_CONFIG.SUPABASE_KEY
+    );
     
     // Сохраняем заказ в базу
-    database.ref('orders').push(orderData)
-        .then(() => {
+    supabase
+        .from('orders')
+        .insert([orderData])
+        .then(response => {
+            if (response.error) {
+                console.error('Ошибка при отправке заказа:', response.error);
+                alert('Произошла ошибка при отправке заказа');
+                return;
+            }
+            
             alert('Заказ успешно отправлен!');
             cart = [];
             updateCartCount();
             toggleOrderForm();
-        })
-        .catch(error => {
-            console.error('Ошибка при отправке заказа:', error);
-            alert('Произошла ошибка при отправке заказа');
         });
->>>>>>> 3e12f15d679cf2e8223a02b2bb2f5802438674f4
 }
 
 // Запускаем загрузку при старте
