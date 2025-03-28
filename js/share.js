@@ -7,18 +7,8 @@ function loadPriceList() {
     const urlParams = new URLSearchParams(window.location.search);
     const priceListId = urlParams.get('id');
     
-    // Загружаем прайс-лист из Supabase
-    const supabase = window.supabase.createClient(
-        SUPABASE_CONFIG.SUPABASE_URL,
-        SUPABASE_CONFIG.SUPABASE_KEY
-    );
-
     // Загружаем прайс-лист по ID
-    supabase
-        .from('price_lists')
-        .select('*')
-        .eq('id', priceListId)
-        .single()
+    priceListsAPI.getPriceList(priceListId)
         .then(response => {
             if (response.error) {
                 document.body.innerHTML = '<h1>Ошибка загрузки прайс-листа</h1>';
@@ -33,8 +23,9 @@ function loadPriceList() {
             }
             
             // Загружаем все товары
+            const supabase = createSupabaseClient();
             supabase
-                .from('products')
+                .from(DB_TABLES.PRODUCTS)
                 .select('*')
                 .then(response => {
                     if (response.error) {
@@ -177,26 +168,19 @@ function sendOrder(e) {
     e.preventDefault();
     
     const orderData = {
-        price_list_id: priceList.id,
-        customer_name: document.getElementById('customerName').value,
-        customer_phone: document.getElementById('customerPhone').value,
-        customer_email: document.getElementById('customerEmail').value,
-        customer_comment: document.getElementById('customerComment').value,
-        items: cart,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        created_at: new Date().toISOString()
+        [DB_SCHEMA.ORDERS.PRICE_LIST_ID]: priceList.id,
+        [DB_SCHEMA.ORDERS.CUSTOMER_NAME]: document.getElementById('customerName').value,
+        [DB_SCHEMA.ORDERS.CUSTOMER_PHONE]: document.getElementById('customerPhone').value,
+        [DB_SCHEMA.ORDERS.CUSTOMER_EMAIL]: document.getElementById('customerEmail').value,
+        [DB_SCHEMA.ORDERS.CUSTOMER_COMMENT]: document.getElementById('customerComment').value,
+        [DB_SCHEMA.ORDERS.ITEMS]: cart,
+        [DB_SCHEMA.ORDERS.TOTAL]: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        [DB_SCHEMA.ORDERS.CREATED_AT]: new Date().toISOString(),
+        [DB_SCHEMA.ORDERS.STATUS]: ORDER_STATUSES.NEW
     };
     
-    // Создаем клиент Supabase
-    const supabase = window.supabase.createClient(
-        SUPABASE_CONFIG.SUPABASE_URL,
-        SUPABASE_CONFIG.SUPABASE_KEY
-    );
-    
-    // Сохраняем заказ в базу
-    supabase
-        .from('orders')
-        .insert([orderData])
+    // Используем API для сохранения заказа
+    ordersAPI.addOrder(orderData)
         .then(response => {
             if (response.error) {
                 console.error('Ошибка при отправке заказа:', response.error);

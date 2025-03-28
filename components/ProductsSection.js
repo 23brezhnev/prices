@@ -1,101 +1,64 @@
-app.component('products-section', {
-    template: `
-        <div class="section">
-            <div class="section-header">
-                <h2>Список товаров</h2>
-                <button @click="$emit('add-product')" class="add-button">
-                    <i class="fas fa-plus"></i> Добавить новый товар
-                </button>
-            </div>
-
-            <div v-if="!products.length" class="empty-state">
-                <p>Список товаров пуст</p>
-            </div>
-            <table v-else class="products-table">
-                <thead>
-                    <tr>
-                        <th>Фото</th>
-                        <th>Название товара</th>
-                        <th>Описание</th>
-                        <th>Базовая цена</th>
-                        <th class="actions">Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="product in products" :key="product.id">
-                        <td class="product-image-cell">
-                            <img 
-                                :src="product.images?.[product.mainImageIndex] || 'placeholder.png'"
-                                :alt="product.name"
-                                @click="$emit('edit-product', product)"
-                            >
-                        </td>
-                        <td>{{ product.name }}</td>
-                        <td>{{ product.description || 'Нет описания' }}</td>
-                        <td>{{ formatPrice(product.basePrice) }} ₽</td>
-                        <td class="actions">
-                            <div class="dropdown">
-                                <button class="dropdown-toggle" @click="toggleDropdown($event)">
-                                    Действия <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="dropdown-menu">
-                                    <button @click="$emit('edit-product', product)">
-                                        <i class="fas fa-edit"></i> Изменить
-                                    </button>
-                                    <button class="delete-action" @click="confirmDelete(product)">
-                                        <i class="fas fa-trash"></i> Удалить
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+const ProductsSection = {
+  props: {
+    products: Array
+  },
+  template: `
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Товары</h2>
+        <button @click="$emit('open-product-modal')" class="btn btn-primary">
+          <span class="icon">+</span> Добавить товар
+        </button>
+      </div>
+      
+      <div v-if="products.length === 0" class="empty-state">
+        <p>У вас пока нет товаров. Добавьте первый товар!</p>
+      </div>
+      
+      <div v-else class="products-grid">
+        <div v-for="product in products" :key="product.id" class="product-card">
+          <div class="product-image">
+            <img v-if="product.image" :src="product.image" :alt="product.name">
+            <div v-else class="no-image">Нет изображения</div>
+          </div>
+          <div class="product-info">
+            <h3>{{ product.name }}</h3>
+            <p class="product-price">{{ formatPrice(product.price) }}</p>
+            <p v-if="product.description" class="product-description">{{ product.description }}</p>
+          </div>
+          <div class="product-actions">
+            <button @click="$emit('open-product-modal', product)" class="btn btn-secondary">
+              <span class="icon">✏️</span> Редактировать
+            </button>
+            <button @click="deleteProduct(product.id)" class="btn btn-danger">
+              <span class="icon">🗑️</span> Удалить
+            </button>
+          </div>
         </div>
-    `,
-    props: {
-        products: {
-            type: Array,
-            required: true
-        }
+      </div>
+    </div>
+  `,
+  methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('ru-RU', { 
+        style: 'currency', 
+        currency: 'RUB' 
+      }).format(price);
     },
-    setup(props, { emit }) {
-        const formatPrice = (price) => {
-            return new Intl.NumberFormat('ru-RU').format(price);
-        };
-
-        const toggleDropdown = (event) => {
-            event.stopPropagation();
-            const dropdown = event.target.closest('.dropdown');
-            const menu = dropdown.querySelector('.dropdown-menu');
-            
-            // Закрываем все открытые меню
-            document.querySelectorAll('.dropdown-menu.show').forEach(m => {
-                if (m !== menu) m.classList.remove('show');
-            });
-            
-            menu.classList.toggle('show');
-        };
-
-        const confirmDelete = (product) => {
-            if (confirm(`Вы уверены, что хотите удалить товар "${product.name}"?`)) {
-                emit('delete-product', product.id);
-            }
-        };
-
-        // Закрытие всех меню при клике вне них
-        onMounted(() => {
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-            });
-        });
-
-        return {
-            formatPrice,
-            toggleDropdown,
-            confirmDelete
-        };
+    async deleteProduct(id) {
+      if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
+      
+      try {
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        this.$emit('refresh-data');
+      } catch (error) {
+        alert('Ошибка при удалении товара: ' + error.message);
+      }
     }
-}); 
+  }
+}; 

@@ -11,8 +11,210 @@
     <link href="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.min.css" rel="stylesheet">
     <script src="https://unpkg.com/ant-design-vue@4.0.7/dist/antd.min.js"></script>
     
-    <!-- Конфигурация -->
-    <script src="config.js"></script>
+    <!-- Стили -->
+    <link href="css/styles.css" rel="stylesheet">
+    
+    <!-- Конфигурация и API модули -->
+    <script src="config/supabase-config.js"></script>
+    <script src="config/db-schema.js"></script>
+    <script src="api/supabase-api.js"></script>
+    <script src="config/app-constants.js"></script>
+    
+    <script>
+    // Ждем загрузки DOM перед инициализацией Vue
+    document.addEventListener('DOMContentLoaded', function() {
+        // Создание Vue приложения
+        const { createApp } = Vue;
+        
+        const app = createApp({
+            data() {
+                return {
+                    loading: false,
+                    user: null,
+                    isLogin: true,
+                    email: '',
+                    password: '',
+                    error: '',
+                    products: [],
+                    showAddProduct: false,
+                    editingProduct: null,
+                    newProduct: {
+                        name: '',
+                        price: 0,
+                        description: ''
+                    },
+                    columns: [
+                        {
+                            title: 'Название',
+                            dataIndex: 'name',
+                            key: 'name',
+                        },
+                        {
+                            title: 'Цена',
+                            dataIndex: 'price',
+                            key: 'price',
+                        },
+                        {
+                            title: 'Описание',
+                            dataIndex: 'description',
+                            key: 'description',
+                        },
+                        {
+                            title: 'Действия',
+                            key: 'action',
+                        },
+                    ],
+                }
+            },
+            methods: {
+                async handleAuth() {
+                    try {
+                        this.error = '';
+                        if (this.isLogin) {
+                            // Используем функцию API для входа
+                            const { data, error } = await authAPI.signIn(this.email, this.password);
+                            if (error) throw error;
+                            this.user = data.user;
+                        } else {
+                            // Используем функцию API для регистрации
+                            const { data, error } = await authAPI.signUp(this.email, this.password);
+                            if (error) throw error;
+                            this.user = data.user;
+                        }
+                        this.email = '';
+                        this.password = '';
+                        await this.loadProducts();
+                    } catch (error) {
+                        console.error('Ошибка авторизации:', error);
+                        this.error = error.message;
+                    }
+                },
+                
+                async loadProducts() {
+                    try {
+                        if (!this.user) {
+                            console.log('Пользователь не авторизован');
+                            return;
+                        }
+                        // Используем функцию API для загрузки товаров
+                        const { data, error } = await productsAPI.getUserProducts(this.user.id);
+                        
+                        if (error) throw error;
+                        this.products = data || [];
+                        console.log('Товары загружены:', this.products);
+                    } catch (error) {
+                        console.error('Ошибка при загрузке товаров:', error);
+                        this.error = error.message;
+                    }
+                },
+                
+                async saveProduct() {
+                    try {
+                        if (!this.user) {
+                            this.error = 'Пользователь не авторизован';
+                            return;
+                        }
+                        
+                        const productData = {
+                            name: this.newProduct.name,
+                            price: this.newProduct.price,
+                            description: this.newProduct.description,
+                            user_id: this.user.id
+                        };
+                        
+                        let response;
+                        if (this.editingProduct) {
+                            // Используем функцию API для обновления товара
+                            response = await productsAPI.updateProduct(this.editingProduct.id, productData);
+                        } else {
+                            // Используем функцию API для добавления товара
+                            response = await productsAPI.addProduct(productData);
+                        }
+                        
+                        if (response.error) throw response.error;
+                        
+                        await this.loadProducts();
+                        this.newProduct = { name: '', price: 0, description: '' };
+                        this.editingProduct = null;
+                        this.showAddProduct = false;
+                    } catch (error) {
+                        console.error('Ошибка при сохранении товара:', error);
+                        this.error = error.message;
+                    }
+                },
+                
+                editProduct(product) {
+                    this.editingProduct = product;
+                    this.newProduct = {
+                        name: product.name,
+                        price: product.price,
+                        description: product.description
+                    };
+                    this.showAddProduct = true;
+                },
+                
+                async deleteProduct(id) {
+                    if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
+                    
+                    try {
+                        // Используем функцию API для удаления товара
+                        const { error } = await productsAPI.deleteProduct(id);
+                        
+                        if (error) throw error;
+                        
+                        await this.loadProducts();
+                    } catch (error) {
+                        console.error('Ошибка при удалении товара:', error);
+                        this.error = error.message;
+                    }
+                }
+            },
+            mounted() {
+                try {
+                    console.log('Mounted hook started');
+                    this.loading = true;
+                    
+                    // Проверяем сессию с помощью API
+                    authAPI.getSession().then(({ data }) => {
+                        if (data.session) {
+                            this.user = data.session.user;
+                            this.loadProducts();
+                        } else {
+                            this.user = null;
+                            this.products = [];
+                        }
+                    });
+                    
+                    // Подписываемся на изменения состояния аутентификации
+                    authAPI.onAuthStateChange((event, session) => {
+                        if (event === 'SIGNED_IN' && session) {
+                            this.user = session.user;
+                            this.loadProducts();
+                        } else if (event === 'SIGNED_OUT') {
+                            this.user = null;
+                            this.products = [];
+                        }
+                    });
+                } catch (error) {
+                    console.error('Ошибка при инициализации:', error);
+                    this.error = error.message;
+                } finally {
+                    this.loading = false;
+                    console.log('Mounted hook completed');
+                }
+            }
+        });
+        
+        // Регистрируем компоненты Ant Design
+        app.use(antd);
+        
+        // Монтируем приложение
+        app.mount('#app');
+        
+        // Добавляем отладочную информацию
+        console.log('App mounted');
+    });
+    </script>
 </head>
 <body>
     <div id="app">
@@ -100,249 +302,5 @@
             </a-layout>
         </a-spin>
     </div>
-
-<script>
-// Инициализация Supabase
-const { createClient } = supabase;
-const supabaseClient = createClient(
-    SUPABASE_CONFIG.SUPABASE_URL,
-    SUPABASE_CONFIG.SUPABASE_KEY
-);
-
-// Создание Vue приложения
-const { createApp } = Vue;
-const { 
-    Button, 
-    Layout, 
-    Card, 
-    Tabs, 
-    Form, 
-    Input, 
-    Modal, 
-    Table, 
-    Row, 
-    Col, 
-    Space,
-    InputNumber 
-} = antd;
-
-const app = createApp({
-    data() {
-        return {
-            loading: false,
-            user: null,
-            isLogin: true,
-            email: '',
-            password: '',
-            error: '',
-            products: [],
-            showAddProduct: false,
-            editingProduct: null,
-            newProduct: {
-                name: '',
-                price: 0,
-                description: ''
-            },
-            columns: [
-                {
-                    title: 'Название',
-                    dataIndex: 'name',
-                    key: 'name',
-                },
-                {
-                    title: 'Цена',
-                    dataIndex: 'price',
-                    key: 'price',
-                },
-                {
-                    title: 'Описание',
-                    dataIndex: 'description',
-                    key: 'description',
-                },
-                {
-                    title: 'Действия',
-                    key: 'action',
-                },
-            ],
-        }
-    },
-    methods: {
-        async handleAuth() {
-            try {
-                this.error = '';
-                if (this.isLogin) {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({
-                        email: this.email,
-                        password: this.password
-                    });
-                    if (error) throw error;
-                    this.user = data.user;
-                } else {
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email: this.email,
-                        password: this.password
-                    });
-                    if (error) throw error;
-                    this.user = data.user;
-                }
-                this.email = '';
-                this.password = '';
-                await this.loadProducts();
-            } catch (error) {
-                console.error('Ошибка авторизации:', error);
-                this.error = error.message;
-            }
-        },
-
-        async loadProducts() {
-            try {
-                if (!this.user) {
-                    console.log('Пользователь не авторизован');
-                    return;
-                }
-                const { data, error } = await supabaseClient
-                    .from('products')
-                    .select('*')
-                    .eq('user_id', this.user.id);
-                
-                if (error) throw error;
-                this.products = data || [];
-                console.log('Товары загружены:', this.products);
-            } catch (error) {
-                console.error('Ошибка при загрузке товаров:', error);
-                this.error = error.message;
-            }
-        },
-
-        async saveProduct() {
-            try {
-                if (!this.user) {
-                    this.error = 'Пользователь не авторизован';
-                    return;
-                }
-
-                const productData = {
-                    name: this.newProduct.name,
-                    price: this.newProduct.price,
-                    description: this.newProduct.description,
-                    user_id: this.user.id
-                };
-
-                let response;
-                if (this.editingProduct) {
-                    response = await supabaseClient
-                        .from('products')
-                        .update(productData)
-                        .eq('id', this.editingProduct.id);
-                } else {
-                    response = await supabaseClient
-                        .from('products')
-                        .insert([productData]);
-                }
-
-                if (response.error) throw response.error;
-
-                await this.loadProducts();
-                this.newProduct = { name: '', price: 0, description: '' };
-                this.editingProduct = null;
-                this.showAddProduct = false;
-            } catch (error) {
-                console.error('Ошибка при сохранении товара:', error);
-                this.error = error.message;
-            }
-        },
-
-        async deleteProduct(id) {
-            if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
-            try {
-                const { error } = await supabaseClient
-                    .from('products')
-                    .delete()
-                    .eq('id', id);
-                
-                if (error) throw error;
-                await this.loadProducts();
-            } catch (error) {
-                console.error('Ошибка при удалении товара:', error);
-                this.error = error.message;
-            }
-        },
-
-        editProduct(product) {
-            this.editingProduct = product;
-            this.newProduct = { ...product };
-            this.showAddProduct = true;
-        },
-    },
-
-    async mounted() {
-        try {
-            this.loading = true;
-            console.log('Mounted hook started');
-            
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
-            if (error) throw error;
-            
-            console.log('Session checked:', session);
-            
-            if (session) {
-                this.user = session.user;
-                await this.loadProducts();
-            }
-
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('Auth state changed:', event);
-                if (event === 'SIGNED_IN' && session) {
-                    this.user = session.user;
-                    this.loadProducts();
-                } else if (event === 'SIGNED_OUT') {
-                    this.user = null;
-                    this.products = [];
-                }
-            });
-        } catch (error) {
-            console.error('Ошибка при инициализации:', error);
-            this.error = error.message;
-        } finally {
-            this.loading = false;
-            console.log('Mounted hook completed');
-        }
-    }
-});
-
-// Регистрируем компоненты Ant Design
-const components = {
-    'a-layout': antd.Layout,
-    'a-layout-content': antd.Layout.Content,
-    'a-card': antd.Card,
-    'a-tabs': antd.Tabs,
-    'a-tab-pane': antd.Tabs.TabPane,
-    'a-form': antd.Form,
-    'a-form-item': antd.Form.Item,
-    'a-input': antd.Input,
-    'a-input-password': antd.Input.Password,
-    'a-input-number': antd.InputNumber,
-    'a-button': antd.Button,
-    'a-modal': antd.Modal,
-    'a-table': antd.Table,
-    'a-row': antd.Row,
-    'a-col': antd.Col,
-    'a-space': antd.Space,
-    'a-textarea': antd.Input.TextArea,
-    'a-spin': antd.Spin,
-    'a-alert': antd.Alert
-};
-
-// Регистрируем все компоненты
-Object.entries(components).forEach(([name, component]) => {
-    app.component(name, component);
-});
-
-// Монтируем приложение
-app.mount('#app');
-
-// Добавляем отладочную информацию
-console.log('App mounted');
-</script>
 </body>
 </html> 
