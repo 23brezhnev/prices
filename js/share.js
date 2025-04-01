@@ -205,14 +205,79 @@ function updateCartCount() {
     document.getElementById('cartCount').textContent = count;
 }
 
+// Инициализация модальных окон
+function initModals() {
+    const cartModal = document.getElementById('cartModal');
+    const orderModal = document.getElementById('orderModal');
+    
+    if (cartModal) {
+        cartModal.style.display = 'none';
+    }
+    
+    if (orderModal) {
+        orderModal.style.display = 'none';
+    }
+}
+
 function toggleCart() {
     const modal = document.getElementById('cartModal');
+    if (!modal) {
+        console.error('Модальное окно корзины не найдено');
+        return;
+    }
+    
     if (modal.style.display === 'block') {
         modal.style.display = 'none';
     } else {
         renderCart();
         modal.style.display = 'block';
     }
+}
+
+function toggleOrderForm() {
+    const modal = document.getElementById('orderModal');
+    if (!modal) {
+        console.error('Модальное окно заказа не найдено');
+        return;
+    }
+    
+    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+}
+
+// Добавляем стили для модальных окон программно
+function addModalStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 function renderCart() {
@@ -239,11 +304,6 @@ function removeFromCart(productId) {
     cart = cart.filter(item => item.productId !== productId);
     updateCartCount();
     renderCart();
-}
-
-function toggleOrderForm() {
-    const modal = document.getElementById('orderModal');
-    modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
 }
 
 function submitOrder() {
@@ -328,5 +388,9 @@ function sendOrder(e) {
     }
 }
 
-// Запускаем загрузку при старте
-loadPriceList(); 
+// Инициализация при загрузке страницы
+window.addEventListener('load', function() {
+    addModalStyles();
+    initModals();
+    loadPriceList();
+}); 

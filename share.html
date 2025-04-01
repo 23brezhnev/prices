@@ -38,16 +38,27 @@
     </script>
 </head>
 <body>
+    <!-- Индикатор загрузки -->
+    <div id="loading" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 9999;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            Загрузка...
+        </div>
+    </div>
+
     <div class="container">
         <div class="share-header">
-            <h1 id="priceListName"></h1>
+            <h1 id="priceListName">Загрузка прайс-листа...</h1>
             <div class="cart-widget" onclick="toggleCart()">
                 <i class="fas fa-shopping-cart"></i>
                 <span id="cartCount">0</span>
             </div>
         </div>
 
-        <div class="products-grid" id="productsGrid"></div>
+        <div id="productsGrid" class="products-grid">
+            <div style="text-align: center; padding: 20px;">
+                Загрузка товаров...
+            </div>
+        </div>
 
         <!-- Корзина -->
         <div id="cartModal" class="modal">
@@ -74,11 +85,21 @@
                     <span class="close" onclick="toggleOrderForm()">&times;</span>
                 </div>
                 <form id="orderForm" onsubmit="sendOrder(event)">
-                    <input type="text" id="customerName" placeholder="Ваше имя" required>
-                    <input type="tel" id="customerPhone" placeholder="Телефон" required>
-                    <input type="email" id="customerEmail" placeholder="Email" required>
-                    <textarea id="customerComment" placeholder="Комментарий к заказу" rows="3"></textarea>
-                    <button type="submit">Отправить заказ</button>
+                    <div class="form-group">
+                        <input type="text" id="customerName" placeholder="Ваше имя" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="tel" id="customerPhone" placeholder="Телефон" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" id="customerEmail" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="customerComment" placeholder="Комментарий к заказу" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-order-btn">Отправить заказ</button>
+                    </div>
                 </form>
             </div>
         </div>
