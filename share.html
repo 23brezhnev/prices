@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр прайс-листа</title>
+    
+    <!-- Стили -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/share-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -16,6 +18,24 @@
     <script src="config/db-schema.js"></script>
     <script src="api/supabase-api.js"></script>
     <script src="config/app-constants.js"></script>
+    
+    <!-- Основной скрипт -->
+    <script src="js/share.js"></script>
+    
+    <script>
+    // Обработчик ошибок загрузки
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+        const container = document.querySelector('.container');
+        if (container) {
+          container.innerHTML = '<div style="color: red; padding: 20px; text-align: center;">' +
+            '<h2>Ошибка загрузки ресурсов</h2>' +
+            '<p>Не удалось загрузить необходимые файлы. Проверьте подключение к интернету и обновите страницу.</p>' +
+          '</div>';
+        }
+      }
+    }, true);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -63,6 +83,23 @@
             </div>
         </div>
     </div>
-    <script src="js/share.js"></script>
+    
+    <script>
+    // Загрузка данных только после полной загрузки страницы
+    window.addEventListener('load', function() {
+        // Проверяем, что все необходимые скрипты загружены
+        if (typeof loadPriceList === 'function') {
+            // Запускаем загрузку данных
+            loadPriceList();
+        } else {
+            console.error('Функция loadPriceList не найдена');
+            document.querySelector('.container').innerHTML = 
+                '<div style="color: red; padding: 20px; text-align: center;">' +
+                '<h2>Ошибка</h2>' +
+                '<p>Не удалось загрузить необходимые скрипты. Пожалуйста, обновите страницу.</p>' +
+                '</div>';
+        }
+    });
+    </script>
 </body>
 </html> 

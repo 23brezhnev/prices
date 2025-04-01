@@ -21,8 +21,16 @@
     <script src="config/app-constants.js"></script>
     
     <script>
-    // Ждем загрузки DOM перед инициализацией Vue
-    document.addEventListener('DOMContentLoaded', function() {
+    // Ждем загрузки DOM и всех скриптов перед инициализацией Vue
+    window.addEventListener('load', function() {
+        // Проверяем, что antd успешно загружен
+        if (typeof antd === 'undefined') {
+            console.error('Ant Design Vue не загружен');
+            // Отображаем сообщение об ошибке для пользователя
+            document.getElementById('app').innerHTML = '<div style="color: red; padding: 20px; text-align: center;">Ошибка загрузки компонентов интерфейса. Пожалуйста, обновите страницу.</div>';
+            return;
+        }
+        
         // Создание Vue приложения
         const { createApp } = Vue;
         

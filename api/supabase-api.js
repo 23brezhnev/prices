@@ -4,10 +4,27 @@
 
 // Функция для создания клиента Supabase
 function createSupabaseClient() {
-  return window.supabase.createClient(
-    SUPABASE_CONFIG.SUPABASE_URL,
-    SUPABASE_CONFIG.SUPABASE_KEY
-  );
+  // Проверяем наличие объекта конфигурации
+  if (typeof SUPABASE_CONFIG === 'undefined') {
+    console.error('SUPABASE_CONFIG не определен. Проверьте, что файл config/supabase-config.js подключен до api/supabase-api.js');
+    return null;
+  }
+  
+  // Проверяем наличие Supabase клиента
+  if (typeof window.supabase === 'undefined') {
+    console.error('Supabase клиент не загружен. Проверьте подключение к интернету и убедитесь, что скрипт Supabase загружен.');
+    return null;
+  }
+  
+  try {
+    return window.supabase.createClient(
+      SUPABASE_CONFIG.SUPABASE_URL,
+      SUPABASE_CONFIG.SUPABASE_KEY
+    );
+  } catch (error) {
+    console.error('Ошибка создания Supabase клиента:', error);
+    return null;
+  }
 }
 
 // Объект с методами для работы с аутентификацией
@@ -15,32 +32,70 @@ const authAPI = {
   // Получить текущую сессию
   async getSession() {
     const client = createSupabaseClient();
-    const { data, error } = await client.auth.getSession();
-    return { data, error };
+    if (!client) return { data: null, error: new Error('Не удалось создать клиент Supabase') };
+    
+    try {
+      const { data, error } = await client.auth.getSession();
+      return { data, error };
+    } catch (error) {
+      console.error('Ошибка при получении сессии:', error);
+      return { data: null, error };
+    }
   },
   
   // Вход по email и паролю
   async signIn(email, password) {
     const client = createSupabaseClient();
-    return await client.auth.signInWithPassword({ email, password });
+    if (!client) return { data: null, error: new Error('Не удалось создать клиент Supabase') };
+    
+    try {
+      return await client.auth.signInWithPassword({ email, password });
+    } catch (error) {
+      console.error('Ошибка при входе:', error);
+      return { data: null, error };
+    }
   },
   
   // Регистрация по email и паролю
   async signUp(email, password) {
     const client = createSupabaseClient();
-    return await client.auth.signUp({ email, password });
+    if (!client) return { data: null, error: new Error('Не удалось создать клиент Supabase') };
+    
+    try {
+      return await client.auth.signUp({ email, password });
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      return { data: null, error };
+    }
   },
   
   // Выход из системы
   async signOut() {
     const client = createSupabaseClient();
-    return await client.auth.signOut();
+    if (!client) return { error: new Error('Не удалось создать клиент Supabase') };
+    
+    try {
+      return await client.auth.signOut();
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+      return { error };
+    }
   },
   
   // Подписка на изменения состояния аутентификации
   onAuthStateChange(callback) {
     const client = createSupabaseClient();
-    return client.auth.onAuthStateChange(callback);
+    if (!client) {
+      console.error('Не удалось создать клиент Supabase');
+      return { data: { subscription: null }, error: new Error('Не удалось создать клиент Supabase') };
+    }
+    
+    try {
+      return client.auth.onAuthStateChange(callback);
+    } catch (error) {
+      console.error('Ошибка при подписке на изменения аутентификации:', error);
+      return { data: { subscription: null }, error };
+    }
   }
 };
 
